@@ -42,6 +42,8 @@ htmlcov/
 .coverage.*
 mutmut*
 .mutmut-cache/
+uv.lock
+*.egg-info/
 
 # ────────────────────────────────────────────────────────────────────────────
 # Zenzic Artifacts (Machine Silence)
@@ -69,6 +71,5 @@ mutmut*
 .clinerules
 .github/agents/
 
-# AI Agents Configuration
-.github/agents/
-.clinerules
+# AI Control Plane — never commit to version control
+.gemini/

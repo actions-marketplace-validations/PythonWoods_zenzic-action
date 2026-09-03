@@ -6,37 +6,56 @@
 
 | Field   | Value      |
 | :------ | :--------- |
-| Version | v1.1.0     |
-| Date    | 2026-06-13 |
+| Version | v2.14.0    |
+| Date    | 2026-08-15 |
 | Status  | Stable     |
 
 ## Release Checklist
 
 Before tagging, every item must be green:
 
-- [ ] `action.yml` — `default:` pin updated to the latest Zenzic core version (`0.9.0`)
-- [ ] `package.json` version bumped to `1.1.0`
-- [ ] `CHANGELOG.md` — `[Unreleased]` section promoted to `[1.1.0] - 2026-05-31`
-- [ ] Update SECURITY.md support table (add v1.1.0, demote previous to Critical/EOL).
+- [ ] `action.yml` — `default:` pin updated to the latest Zenzic core version (`0.30.0`)
+- [ ] `package.json` version bumped to `2.14.0`
+- [ ] `pyproject.toml` — synchronized with core pin (`zenzic==0.30.0`)
+- [ ] `just versions` — returns `✅ Ecosystem alignment verified.`
 - [ ] `just verify` — exits 0
-- [ ] `zenzic check .` — zero findings
-- [ ] `guard-scan` input documented in README.md
-- [ ] `cap-exceeded` output wired in wrapper and documented
+- [ ] `zenzic check .` — zero findings (DQS 100/100)
 
 ## Bump & Publish
 
 ```bash
-# Bumps package.json, CHANGELOG.md, and action.yml pin atomically:
-just bump <version>    # e.g. just bump 1.1.0
+# 1. Create release branch
+git checkout -b release/vX.Y.Z
 
-git push && git push --tags
+# 2. Preview orchestrated release (version bump + core pin)
+just release-dry <patch|minor|major> <core-version>
 
-# Move the floating v1 tag to the new release:
-git tag -f v1 <new-tag>
-git push origin v1 --force
+# 3. Execute orchestrated release in one signed commit
+just release <patch|minor|major> <core-version>
+
+# 4. Validate release metadata/core-pin parity
+just audit-release
+
+# 5. Open and merge PR into main
+
+# 6. Switch to main and pull latest
+git checkout main
+git pull origin main
+
+# 7. Create the release tag and push
+git tag -s -m "Release v2.14.0" v2.14.0
+git push origin v2.14.0
+
+# 8. Move the floating v2 tag to the new release:
+git tag -s -fa v2 v2.14.0^{} -m "release: v2.14.0"
+git push origin v2 --force
+
+# Verification (Atomic Parity Check):
+git rev-parse v2^{} v2.14.0^{}
+# SUCCESS: Both hashes must be identical.
 ```
 
-Distribution target: **GitHub Actions Marketplace** — `uses: PythonWoods/zenzic-action@v1`.
+Distribution target: **GitHub Actions Marketplace** — `uses: PythonWoods/zenzic-action@v2`.
 
 ## Version Scheme
 

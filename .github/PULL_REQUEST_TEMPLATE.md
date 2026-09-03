@@ -3,72 +3,29 @@
 <!-- markdownlint-disable MD041 -->
 
 ## Description
+<!-- Describe the architectural intent of the changes and provide context. -->
+Fixes #
 
-<!-- Describe your changes in detail. Link the issue this PR resolves. -->
+## Type of Change
 
-Closes #
-
-## Type of change
-
-- [ ] Bug fix
-- [ ] New input / output / behaviour
-- [ ] SARIF output change
-- [ ] Shell / wrapper script change
-- [ ] action.yml contract change
+- [ ] Bug fix (non-breaking change fixing an issue)
+- [ ] New feature (non-breaking change adding functionality)
+- [ ] Breaking change (fix or feature breaking backward compatibility)
 - [ ] Documentation update
+- [ ] Refactoring / Tech Debt removal
+- [ ] CI/CD workflow improvement
 
----
+## Governance & Compliance Checklist
 
-## The Action Contract — mandatory checklist
+- [ ] **DCO & Signatures:** All commits are signed with DCO (`git commit -s`) and GPG/SSH (`git commit -S`).
+- [ ] **Issue-First:** This PR addresses an explicitly approved Issue.
+- [ ] **Changelog:** I have updated `CHANGELOG.md` under the `## [Unreleased]` section.
+- [ ] **Commit Standards:** Commit messages strictly follow the Conventional Commits specification.
+- [ ] **Absolute Ownership:** I have verified and can architecturally justify every single line of code. No unreviewed AI-generated code is included.
 
-Every PR that touches `action.yml`, `zenzic-action-wrapper.sh`, or `.github/workflows/` must
-satisfy all that apply.
+## Architectural Quality Gates (GitHub Action)
 
-### 1. Exit Code Contract
-
-- [ ] Exit codes 2 (findings) and 3 (path traversal guard) are **never suppressible** via any new
-  input or flag — the action must propagate them to the runner unconditionally.
-- [ ] `continue-on-error` is **not** set to `true` in any updated workflow example.
-
-### 2. Shell Composability
-
-- [ ] The wrapper script (`zenzic-action-wrapper.sh`) uses POSIX-compatible syntax — no
-  bash-isms (`[[ ]]`, `local`, `declare -A`, process substitution) unless the shebang is `#!/usr/bin/env bash`.
-- [ ] Any new shell logic has been tested on both bash and sh.
-
-### 3. action.yml Contract
-
-- [ ] The `using: docker` / `using: composite` type is unchanged unless this PR specifically
-  changes the action type (requires a major version bump).
-- [ ] New inputs have explicit `default:` values where appropriate, and `required: true` only
-  when there is no sensible default.
-- [ ] The pinned Zenzic version in `action.yml` (if any) is independent from the action's own
-  release cycle — updating Zenzic does not force a new action tag.
-
-### 4. SARIF Output Contract
-
-- [ ] The SARIF file produced by this action is valid against the SARIF 2.1.0 schema.
-- [ ] No new finding is emitted without a stable `ruleId` that maps to a Zenzic frozen code.
-
----
-
-## Enterprise governance compliance
-
-- [ ] This PR addresses an approved Issue #___ and complies with the **Issue-First Policy**.
-- [ ] Every commit in this PR is **cryptographically signed** (GPG/SSH/S/MIME) and shows as "Verified" on GitHub.
-- [ ] Every commit has a valid **Developer Certificate of Origin (DCO)** sign-off (`Signed-off-by:` via `git commit -s`).
-- [ ] I have verified and can architecturally justify every single line of code proposed in this PR (**No AI Slop**).
-- [ ] All commit messages comply with the **Conventional Commits** specification.
-
----
-
-## Quality gates
-
-- [ ] `just verify` passes end-to-end.
-- [ ] REUSE/SPDX headers are present on every new file.
-
----
-
-## Notes for reviewers
-
-<!-- Anything unusual about this PR that reviewers should know? -->
+- [ ] **Version Pinning Integrity:** I have not altered the strict core version pinning without approval.
+- [ ] **SARIF & Annotation Standards:** SARIF output complies strictly with Static Analysis Results Interchange Format (SARIF) v2.1.0 specification.
+- [ ] **Local Quality Pipeline:** `just test` (or workflow validation suite) passes without errors.
+- [ ] **Fail-Closed Security:** Security violations (exit codes 2 and 3) propagate unconditionally to the GitHub runner.

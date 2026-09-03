@@ -37,7 +37,7 @@ jobs:
     # Local and CI run identical 'just check' invocations.
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Determine Zenzic Core Branch (Parity or Fallback)
         id: resolve-branch
@@ -106,7 +106,7 @@ jobs:
           fi
 
       - name: Checkout local zenzic (unreleased)
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: PythonWoods/zenzic
           ref: ${{ steps.resolve-branch.outputs.core_ref }}
@@ -117,7 +117,7 @@ jobs:
         uses: taiki-e/install-action@ea85faa6acd705ad6d40586db99f1a70b09c2929 # just
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
 
       - name: Set up Python 3.12
         run: uv python install 3.12
@@ -144,3 +144,24 @@ jobs:
         uses: ./
         with:
           working-directory: tests/fixture
+          check-stamp: "false"
+          upload-sarif: "false"
+
+      - name: Test Action Locally with Z001 Config Error Fixture
+        id: test-z001
+        uses: ./
+        continue-on-error: true
+        with:
+          working-directory: _zenzic_core/examples/z001-config-error
+          fail-on-error: "true"
+          check-stamp: "false"
+          upload-sarif: "false"
+
+      - name: Assert Z001 Failure
+        shell: bash
+        run: |
+          if [[ "${{ steps.test-z001.outcome }}" != "failure" ]]; then
+            echo "::error::Expected action to fail on Z001 config-error fixture, but it passed."
+            exit 1
+          fi
+          echo "✓ Action correctly failed on Z001 configuration error."

@@ -29,15 +29,8 @@ fail_under = 100
 # respect_vcs_ignore = true
 # validate_same_page_anchors = true
 
-# External URLs excluded from the broken-link check (applies only with --strict)
-excluded_external_urls = [
-    # GitHub repo URLs return 429 (rate-limited) in CI.
-    "https://github.com/PythonWoods/zenzic-action",
-    "https://github.com/PythonWoods/zenzic",
-    # TODO: Remove post-deploy (Temporary exemption for unreleased pages).
-    "https://zenzic.dev/docs/reference/zenzic-action",
-    "https://zenzic.dev/it/docs/reference/zenzic-action",
-]
+excluded_external_urls = []
+
 
 # Z204 Privacy Gate — terms that must never appear in published docs.
 # forbidden_patterns = []
@@ -46,12 +39,11 @@ excluded_external_urls = [
 # Paths listed here are INVISIBLE to Zenzic: no findings, no audit trail.
 # Prefer [governance.per_file_ignores] for targeted suppression with an audit trail.
 excluded_dirs = [
-    "assets",
     "scripts",
     "LICENSES",
     "_zenzic_core",  # CI checkout of sibling core repo — not action documentation
 ]
-# excluded_file_patterns = ["*.tmp", "*.log"]
+excluded_file_patterns = ["RELEASE.md"]
 # excluded_assets = ["favicon.ico"]
 # excluded_asset_dirs = ["theme/"]
 # excluded_build_artifacts = ["pdf/*.pdf"]
@@ -119,9 +111,13 @@ brand_obsolescence = [
 # BEHAVIOR: Matched findings are silently dropped — ZERO debt added.
 # IMPACT:   In --audit mode, shown with [POLICY_EXEMPTION] label.
 #
-# [governance.directory_policies]
-# "blog/**"                       = ["Z601"]  # historical archive
-# "docs/explanation/registry.mdx" = ["Z601"]  # SSOT codename registry
+[governance.directory_policies]
+"**" = ["Z106"]
+"README.md" = ["Z101"]
+"assets/**" = ["Z405"]
+"changelogs/**" = ["Z410", "Z411", "Z513"]
+"CHANGELOG.md" = ["Z513"]
+"CODE_OF_CONDUCT.md" = ["Z411", "Z511"]
 
 # Governance Playbook:
 # https://zenzic.dev/developers/how-to/release-governance-protocol
@@ -135,16 +131,6 @@ id       = "ZZ-NOCLICKHERE"
 pattern  = "(?i)\\bclick here\\b|\\bclicca qui\\b"
 message  = "Avoid generic link text. Use a meaningful description for accessibility."
 severity = "error"
-
-# --- I18N PARITY (Optional) ---
-# [i18n]
-# enabled = true
-# base_lang = "en"
-# base_source = "docs"
-# strict_parity = true
-# require_frontmatter_parity = ["title", "description"]
-# [i18n.targets]
-# it = "i18n/it/docusaurus-plugin-content-docs/current"
 
 # --- GATE 4: CI/CD (GitHub Actions, Optional) ---
 # Add this workflow snippet to .github/workflows/zenzic.yml

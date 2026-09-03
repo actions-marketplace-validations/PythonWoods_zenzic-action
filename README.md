@@ -1,17 +1,22 @@
-<!-- SPDX-FileCopyrightText: 2026 PythonWoods <dev@pythonwoods.dev> -->
-<!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- markdownlint-disable MD033 MD041 MD060 -->
+<!--
+SPDX-FileCopyrightText: 2026 PythonWoods <dev@pythonwoods.dev>
+SPDX-License-Identifier: Apache-2.0
+-->
 
 <p align="center">
   <a href="https://github.com/PythonWoods/zenzic-action">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/zenzic-wordmark-action-dark.svg">
-      <img alt="Zenzic / action" src="assets/zenzic-wordmark-action.svg" width="350">
+      <source media="(prefers-color-scheme: dark)" srcset="./assets/zenzic-wordmark-action-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="./assets/zenzic-wordmark-action.svg">
+      <img alt="Zenzic / action" src="./assets/zenzic-wordmark-action-dark.svg" width="350">
     </picture>
   </a>
 </p>
 
-<p align="center">The deterministic enforcement point for documentation integrity in CI. Exit codes are contractual — exits 2 and 3 survive <code>fail-on-error: false</code>.</p>
+<p align="center">
+  <strong>Deterministic Documentation Quality Platform (DQP) for GitHub Actions.</strong><br>
+  <em>Enforce semantic correctness, topological link integrity, and credential safety on every pull request.</em>
+</p>
 
 <p align="center">
   <a href="https://github.com/PythonWoods/zenzic-action/actions/workflows/self-check.yml"><img alt="ci-status" src="https://img.shields.io/github/actions/workflow/status/PythonWoods/zenzic-action/self-check.yml?branch=main&label=ci&style=flat-square"></a>
@@ -27,200 +32,222 @@
 
 ---
 
-Run Zenzic checks in CI and surface results directly in GitHub Code Scanning — without reading logs.
+## Documentation Quality Platform at the CI/CD Gate
 
-**Exit code contract.** The wrapper propagates Zenzic's exit codes without remapping. Exit 1 (quality) obeys `fail-on-error`. Exit 2 (credential) and exit 3 (path traversal) terminate the job regardless of `fail-on-error: false` or `--exit-zero` — security findings are never suppressed at the enforcement boundary.
+Technical documentation is a continuously validated engineering asset. Broken links, orphaned pages, leaked API keys, and invalid metadata degrade developer trust and damage product integrity.
 
-## Core Features
-
-| Feature | Description |
-|---|---|
-| Zero-setup install | `uvx zenzic` — no Python toolchain required on the runner |
-| SARIF output | Findings feed directly into GitHub Code Scanning |
-| Exit Code Contract | Security incidents (exit 2/3) are never suppressed by `fail-on-error` |
-| Sovereign Audit mode | `audit: "true"` bypasses all suppressions — surfaces the true documentation state |
-| SARIF integrity check | Validates JSON before upload; emits `::warning` if truncated by SIGKILL |
-| PR annotations | Inline findings on the diff, colour-coded by severity |
-| Version pinning | Pin to an exact release for deterministic, reproducible CI gates |
-| **Clean prose** | `[governance.directory_policies]` in `.zenzic.toml` grants zero-debt exemptions to path patterns |
-
-## Quick Start
-
-The minimal configuration — zero Python setup, SARIF to Code Scanning in one step:
-
-```yaml title=".github/workflows/docs.yml"
-- uses: actions/checkout@v6
-
-- name: Run Zenzic Documentation Quality Gate
-  uses: PythonWoods/zenzic-action@v1
-  with:
-    version: "0.13.0"
-    format: sarif
-    upload-sarif: "true"
-  permissions:
-    contents: read
-    security-events: write
-```
-
-Place a `.zenzic.toml` at the root of your repository and the action picks it up automatically — no `config-file` input required. Run `zenzic init` once to scaffold a config if your docs live outside the default `docs/` folder.
-
-For advanced configuration (Configuration Discovery, Sovereign Override, Quality Gate scoring, nightly audit), see the [Zenzic Action docs](https://zenzic.dev/docs/reference/zenzic-action).
+**`zenzic-action`** integrates the **Documentation Quality Platform (DQP)** into GitHub Actions workflows. It compiles and evaluates your documentation graph in seconds, blocks defective merges, and emits enriched SARIF v2.1.0 telemetry directly to GitHub Code Scanning.
 
 ---
 
-## Branch Protection Policy (Operational)
+## ⚡ Quick Start (< 60 Seconds)
 
-For the `zenzic-action` repository, protect `main` and enable **Require status checks to pass before merging**.
-
-Required checks:
-
-- `Verify (ubuntu-latest, true)`
-- `Lint PR Title`
-- `Check DCO`
-
-Operational intent:
-
-- `Verify (ubuntu-latest, true)` is the functional integrity gate for the action runtime and wrapper behavior.
-- `Lint PR Title` and `Check DCO` enforce governance and legal traceability on every PR.
-
-Fail-closed rule:
-
-- Every required check must run on `pull_request`.
-- Do not configure branch protection with required checks that are tag-only, release-only, or schedule-only workflows.
-
----
-
-## Inputs
-
-| Input | Default | Description |
-|---|---|---|
-| `version` | `0.13.0` | Zenzic version to install. Pin to a specific release for reproducible CI. Set `latest` for continuous evaluation. |
-| `format` | `sarif` | Output format: `text`, `json`, or `sarif`. |
-| `sarif-file` | `zenzic-results.sarif` | SARIF output path (when `format: sarif`). Must be a **relative** path inside the workspace. |
-| `upload-sarif` | `true` | Upload SARIF to GitHub Code Scanning. |
-| `strict` | `false` | Treat warnings as errors. |
-| `fail-on-error` | `true` | Fail the workflow step on findings. |
-| `config-file` | *(auto)* | Optional path to a config file. Auto-discovers `.zenzic.toml` → `.github/.zenzic.toml` when omitted. |
-| `audit` | `false` | Sovereign audit mode: bypass all `zenzic:ignore` comments and `per_file_ignores`. Reveals the true unfiltered documentation state. Recommended for nightly builds and security review workflows. |
-| `diff-base` | *(snapshot)* | Path to a JSON baseline file for `zenzic diff`. Use an artifact from the `main` branch to block PRs that increase technical debt. Falls back to `.zenzic-score.json` when omitted. |
-| `guard-scan` | `false` | Run `zenzic guard scan` as a Defense-in-Depth step **before** the main quality gate. Catches hardcoded credentials and forbidden patterns that bypassed pre-commit hooks. Security findings fail with exit 2/3 and are not governed by `fail-on-error`. |
-
-## Outputs
-
-| Output | Description |
-|---|---|
-| `sarif-file` | Path to the generated SARIF file. |
-| `findings-count` | Total number of findings. |
-| `score` | Documentation Quality Score (0–100). Available when `format: json` or when `diff-base` is set. |
-| `suppression-debt-pts` | Technical Debt points deducted from the score due to active suppressions. `0` when no suppressions are active. |
-| `cap-exceeded` | `"true"` when the suppression CAP was exceeded and blocked the build; `"false"` otherwise. |
-
-## Advanced Workflows
-
-### Debt Regression Blocking
-
-Block pull requests that increase documentation debt. Save a baseline from `main` as a workflow artifact; the quality-gate job downloads it and fails if `zenzic diff` reports a score drop.
+Add this single workflow file to `.github/workflows/documentation-gate.yml`:
 
 ```yaml
-jobs:
-  baseline:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Save score baseline
-        uses: PythonWoods/zenzic-action@v1
-        with:
-          format: json
-          save: "true"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: zenzic-baseline
-          path: .zenzic-score.json
+name: Documentation Quality Gate
 
-  quality-gate:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: zenzic-baseline
-      - name: Block debt regression
-        uses: PythonWoods/zenzic-action@v1
-        with:
-          format: json
-          diff-base: .zenzic-score.json
-```
-
-### Sovereign Nightly Audit
-
-Run a full unfiltered audit nightly to reveal the true documentation state — bypassing all `zenzic:ignore` comments and `per_file_ignores`. Findings that are suppressed in day-to-day CI are visible here.
-
-```yaml
 on:
-  schedule:
-    - cron: "0 3 * * *"   # 03:00 UTC daily
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  sovereign-audit:
+  audit:
+    name: Zenzic Document Integrity Gate
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF Code Scanning alerts
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Sovereign audit (no suppressions)
-        uses: PythonWoods/zenzic-action@v1
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Zenzic Static Analyzer
+        uses: PythonWoods/zenzic-action@v2
         with:
-          audit: "true"
-          format: sarif
+          version: "0.30.0"
+          format: "sarif"
           upload-sarif: "true"
 ```
 
-### Using Action Outputs
+*Zero toolchain configuration required. The action executes in an isolated environment via `uvx` and automatically leverages aggressive local caching—requiring zero manual `actions/cache` or Python environment setup.*
 
-Capture `score`, `suppression-debt-pts`, and `cap-exceeded` from the action for conditional logic or downstream reporting.
+---
+
+## 🎯 Immediate Benefits
+
+Integrating Zenzic into your CI/CD workflow delivers immediate security, quality, and authoring guarantees:
+
+### 1. Zero-Leak Security Enforcement
+Hardcoded API keys, tokens, and credentials (`Z201`) immediately trigger **Exit Code 2**, halting the CI pipeline instantly. Security violations bypass all suppression budgets and cannot be overridden by `--exit-zero`.
+
+### 2. Rich PR Annotations & Code Scanning
+Findings are uploaded directly to **GitHub Code Scanning (SARIF v2.1.0)**. PR reviewers see actionable annotations on the exact line and file with remediation instructions—no digging through raw terminal logs.
+
+<p align="center">
+  <img alt="Zenzic SARIF PR Annotation" src="assets/sarif-showcase.svg" width="800">
+</p>
+
+### 3. Full Topological & Semantic Validation
+- **Broken Cross-References**: Detects dead links, missing image assets, and broken URL anchors across thousands of files in milliseconds.
+- **Accessibility Checks**: Flags generic image alt text (`Z514`), malformed lists (`Z520`), and bare unformatted URLs (`Z515`).
+- **Policy-as-Code Compliance**: Enforces required frontmatter (`Z610`), forbidden terms (`Z617`), and Zero-Trust domain whitelists (`Z614`).
+
+### 4. Deterministic Quality Scoring (DQS)
+Track your documentation health over time with mathematical rigor (0–100 score). Set hard quality gates (`fail_under = 90`) to maintain quality standards automatically.
+
+---
+
+## 🛠️ Action Configuration Reference
+
+Configure all inputs and outputs for `zenzic-action` within your workflow definition:
+
+### Inputs
+
+| Input | Default | Description |
+|:---|:---|:---|
+| `version` | `0.30.0` | Exact Zenzic Core version to execute. Pin to a specific release for reproducible CI gates. |
+| `working-directory` | `.` | Relative path to directory where Zenzic should run (useful for monorepos). |
+| `format` | `sarif` | Output format: `sarif`, `text`, or `json`. |
+| `sarif-file` | `zenzic-results.sarif` | Relative path inside the workspace for SARIF output. |
+| `upload-sarif` | `true` | Upload SARIF results to GitHub Code Scanning (requires `security-events: write`). |
+| `strict` | `false` | Exit non-zero on warnings as well as errors. |
+| `fail-on-error` | `true` | Fail the workflow step if Zenzic detects quality errors. |
+| `config-file` | `""` | Optional path to custom `.zenzic.toml` (auto-discovers root `.zenzic.toml` if omitted). |
+| `audit` | `false` | Sovereign Audit mode: bypasses all inline suppressions to reveal unfiltered documentation graph state. |
+| `guard-scan` | `false` | Run `zenzic guard scan` pre-check for credentials and forbidden patterns. Failures are fatal. |
+| `check-stamp` | `true` | Verify documentation badge score freshness (`zenzic score --check-stamp`). |
+| `generate_audit_report` | `false` | Generate formal compliance report (`zenzic-audit.json`) and upload as workflow artifact. |
+
+### Outputs
+
+| Output | Description |
+| :--- | :--- |
+| `score` | Documentation Quality Score (`0`–`100`). Available when format is `json` or `sarif`. |
+| `sarif-file` | Path to the generated SARIF file. |
+| `findings-count` | Total number of diagnostic findings reported. |
+| `suppression-debt-pts` | Technical Debt points deducted from score due to active suppressions. |
+| `cap-exceeded` | Set to `"true"` if the technical debt suppression cap was exceeded. |
+
+---
+
+## 📋 Ready-to-Use Workflow Blueprints
+
+Select the appropriate integration pattern for your repository requirements:
+
+### Blueprint 1: Strict Pull Request Quality Gate
+
+Blocks PR merges if broken links are introduced or if the Documentation Quality Score drops below 95:
 
 ```yaml
-steps:
-  - uses: actions/checkout@v4
+name: Documentation PR Gate
 
-  - name: Zenzic quality gate
-    id: zenzic
-    uses: PythonWoods/zenzic-action@v1
-    with:
-      format: json
-      fail-on-error: "false"
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.zenzic.toml'
 
-  - name: Report score
-    run: |
-      echo "Score: ${{ steps.zenzic.outputs.score }}/100"
-      echo "Suppression debt: ${{ steps.zenzic.outputs.suppression-debt-pts }} pts"
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
-  - name: Fail if suppression CAP exceeded
-    if: steps.zenzic.outputs.cap-exceeded == 'true'
-    run: |
-      echo "::error::Suppression CAP exceeded — build blocked."
-      exit 1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Documentation Integrity
+        uses: PythonWoods/zenzic-action@v2
+        with:
+          version: "0.30.0"
+          strict: "true"
+          fail-under: 95
+          upload-sarif: "true"
+```
+
+### Blueprint 2: Nightly Sovereign Audit & Badge Generation
+
+Performs an unsuppressed audit of your documentation graph and verifies status badge freshness:
+
+```yaml
+name: Nightly Documentation Audit
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # Every night at 3:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Sovereign Audit
+        uses: PythonWoods/zenzic-action@v2
+        with:
+          version: "0.30.0"
+          audit: "true"
+          format: "markdown"
+```
+
+### Blueprint 3: Monorepo Documentation Matrix
+
+Run parallel, isolated documentation audits across multiple sub-projects or service directories using GitHub Actions `strategy.matrix` and `working-directory`:
+
+```yaml
+name: Monorepo Documentation Matrix Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  audit-monorepo:
+    name: Audit (${{ matrix.project.name }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - name: "core-docs"
+            path: "docs"
+          - name: "frontend-docs"
+            path: "services/frontend/docs"
+          - name: "backend-api-docs"
+            path: "services/backend/docs"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify Documentation Integrity
+        uses: PythonWoods/zenzic-action@v2
+        with:
+          version: "0.30.0"
+          working-directory: ${{ matrix.project.path }}
+          upload-sarif: "true"
+          sarif-file: "zenzic-${{ matrix.project.name }}.sarif"
 ```
 
 ---
 
-## Exit Codes
+## 📦 Unified Ecosystem
 
-| Code | Meaning | Suppressible? |
-|:---:|---|:---:|
-| `0` | All checks passed | — |
-| `1` | Documentation findings (broken links, orphans, suppression CAP) | Yes (`fail-on-error: "false"`) |
-| **`2`** | **Credential detected (Z201)** | **Never** |
-| **`3`** | **Path traversal detected (Z202/Z203)** | **Never** |
+- **[Zenzic CLI (Core Engine)](https://github.com/PythonWoods/zenzic)**: Terminal scanner, AST parser, and atomic automated fixer (`zenzic fix`).
+- **[Zenzic VS Code Extension](https://github.com/PythonWoods/zenzic-vscode)**: Real-time editor diagnostics, Quick Fixes, and inline DQS telemetry.
+- **[Official Documentation](https://zenzic.dev)**: For deep architectural explanations, CI/CD blueprints, and the full finding taxonomy, visit [zenzic.dev](https://zenzic.dev).
 
 ---
 
-For advanced governance (Scoring & Debt, Sovereign Audit, Quality Gate PR blocking), see the
-[Zenzic Action docs](https://zenzic.dev/docs/reference/zenzic-action).
+## 📄 License
 
-For security architecture internals (exit code contract, Root-First discovery, SARIF integrity guard),
-see the [Engineering Ledger](https://zenzic.dev/developers/explanation/adr-vault).
-
-## License
-
-Apache-2.0 — see [LICENSE](LICENSE).
+Licensed under the [Apache License, Version 2.0](LICENSE).
+Copyright (c) 2026 PythonWoods `<dev@pythonwoods.dev>`.
